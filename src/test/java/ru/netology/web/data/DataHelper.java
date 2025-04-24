@@ -49,7 +49,7 @@ public class DataHelper {
     }
     @Value
     public static class TransferNumber {
-        int number;
+        int amount;
     }
 
 
