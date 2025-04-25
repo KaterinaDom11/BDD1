@@ -15,22 +15,23 @@ public class DashboardPage {
 
     private ElementsCollection cards = $$(".list__item div");
     private final String balanceStart = "баланс: ";
-    private final String balanceFinish = " р.";;
+    private final String balanceFinish = " р.";
+    ;
 
     public DashboardPage() {
         heading.shouldBe(visible);
     }
 
-    private SelenideElement getCardInfo(DataHelper.CardInfo cardInfo){ //ищем карту по ID
-       return cards.findBy(Condition.attribute("data-test-id", cardInfo.getTestId()));
+    private SelenideElement getCardInfo(DataHelper.CardInfo cardInfo) { //ищем карту по ID
+        return cards.findBy(Condition.attribute("data-test-id", cardInfo.getTestId()));
     }
 
-    public int getCardBalance (DataHelper.CardInfo cardInfo){ //ищем баланс, принимает объект номер карты
-       var text = getCardInfo(cardInfo).getText(); //getCardInfo-выполняет поиск карты, получает текст getText
-       return extractBalance (text);
+    public int getCardBalance(DataHelper.CardInfo cardInfo) { //ищем баланс, принимает объект номер карты
+        var text = getCardInfo(cardInfo).getText(); //getCardInfo-выполняет поиск карты, получает текст getText
+        return extractBalance(text);
     }
 
-    public TransferPage selectCard(DataHelper.CardInfo cardInfo){
+    public TransferPage selectCard(DataHelper.CardInfo cardInfo) {
         getCardInfo(cardInfo).$("button").click(); //getCardInfo(cardInfo) - ищет карту, далее в этом же элементе ищет кнопку
         return new TransferPage();
     }
@@ -41,4 +42,10 @@ public class DashboardPage {
         var value = text.substring(start + balanceStart.length(), finish);
         return Integer.parseInt(value);
     }
+
+    //private int transferFunds (DataHelper.CardInfo fromCard, DataHelper.TransferNumber transferAmount){
+        //int transferFund = getCardBalance(fromCard);
+       // int expectedBalance = transferFund - transferAmount;
+    //}
+
 }

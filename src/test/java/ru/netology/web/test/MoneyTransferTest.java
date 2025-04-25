@@ -12,6 +12,7 @@ import ru.netology.web.page.TransferPage;
 
 import java.time.Duration;
 
+import static com.codeborne.selenide.Condition.visible;
 import static com.codeborne.selenide.Selectors.withText;
 import static com.codeborne.selenide.Selenide.*;
 import static ru.netology.web.data.DataHelper.getAuthInfo;
@@ -28,9 +29,9 @@ class MoneyTransferTest {
         var loginPage = Selenide.open("http://localhost:9999", LoginPage.class); //запускам страницу и используем пейдж с сохраненными полями страницы
         var verificationPage = loginPage.validLogin(info); // положили в loginPage валидные логин и пароль пользователя, нажали клик и перешли на страницу вертификации (verificationPage)
         var dashboardPage = verificationPage.validVerification(verificationCode); //на странице вертификации заполнили код и переходим на страницу личный кабинет (dashboardPage)
-        var transferCard = dashboardPage.selectCard(cardFirstInfo);
-        var transferAmount = transferCard.enterTransferAmount(amount100, cardSecondInfo);
-
+        var transferCard = dashboardPage.selectCard(cardFirstInfo); //в странице с картами
+        var transferAmount = transferCard.enterTransferAmount(amount100, cardSecondInfo); //на странице перевода
+      // dashboardPage.getCardBalance(cardFirstInfo);
         }
 
     @Test
@@ -46,10 +47,11 @@ class MoneyTransferTest {
         var dashboardPage = verificationPage.validVerification(verificationCode); //на странице вертификации заполнили код и переходим на страницу личный кабинет (dashboardPage)
         var transferCard = dashboardPage.selectCard(cardFirstInfo);
         $("[data-test-id='dashboard']")
-                .shouldHave(Condition.text("Личный кабинет"), Duration.ofSeconds(15)).shouldBe(Condition.visible);
+                .shouldHave(Condition.text("Личный кабинет"), Duration.ofSeconds(15)).shouldBe(visible);
         $("[class=App_appContainer__3jRx1]");
-        $("[data-test-id=amount] .input_type_text").click();
+        $("[data-test-id=amount] .input__control").shouldBe(visible).setValue("100");
+        $("[data-test-id=from] .input__control").shouldBe(visible).setValue("5559 0000 0000 0002");
+        $(".button").click();
 
-        $("[data-test-id=amount] .money-input__value").setValue("100");
     }
 }
