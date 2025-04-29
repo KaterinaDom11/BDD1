@@ -30,8 +30,8 @@ class MoneyTransferTest {
         var verificationPage = loginPage.validLogin(info); // положили в loginPage валидные логин и пароль пользователя, нажали клик и перешли на страницу вертификации (verificationPage)
         var dashboardPage = verificationPage.validVerification(verificationCode); //на странице вертификации заполнили код и переходим на страницу личный кабинет (dashboardPage)
         var transferCard = dashboardPage.selectCard(cardFirstInfo); //в странице с картами
-        var transferAmount = transferCard.enterTransferAmount(amount100, cardSecondInfo); //на странице перевода
-      // dashboardPage.getCardBalance(cardFirstInfo);
+        transferCard.enterTransferAmount(amount100, cardSecondInfo); //на странице перевода
+        dashboardPage.updateCardBalance(cardFirstInfo,amount100);
         }
 
     @Test
@@ -52,6 +52,6 @@ class MoneyTransferTest {
         $("[data-test-id=amount] .input__control").shouldBe(visible).setValue("100");
         $("[data-test-id=from] .input__control").shouldBe(visible).setValue("5559 0000 0000 0002");
         $(".button").click();
-
+        $("[data-test-id=92df3f1c-a033-48e6-8390-206f6b1f56c0] .list__item").shouldHave(Condition.text("10100")).shouldBe(visible);
     }
 }

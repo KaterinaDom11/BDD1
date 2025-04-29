@@ -43,9 +43,18 @@ public class DashboardPage {
         return Integer.parseInt(value);
     }
 
-    //private int transferFunds (DataHelper.CardInfo fromCard, DataHelper.TransferNumber transferAmount){
-        //int transferFund = getCardBalance(fromCard);
-       // int expectedBalance = transferFund - transferAmount;
-    //}
+    public int updateCardBalance(DataHelper.CardInfo cardInfo, DataHelper.TransferNumber transferAmount) {
+        int currentBalance = getCardBalance(cardInfo); // Получаем текущий баланс
+        int newBalance = currentBalance + transferAmount.getAmount(); // Обновляем баланс
+        enterTransferAmount(cardInfo, transferAmount.getAmount());
+
+        // Проверяем, что текст на карточке соответствует новому балансу
+        getCardInfo(cardInfo).shouldHave(Condition.text(String.valueOf(newBalance))); // Приводим newBalance к строке
+
+        // Обновляем интерфейс
+        refreshUI(); // Обновляем интерфейс после выполнения перевода
+
+        return newBalance;; // Возвращаем новый баланс
+    }
 
 }
