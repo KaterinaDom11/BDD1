@@ -1,57 +1,63 @@
 package ru.netology.web.test;
 
-import com.codeborne.selenide.Condition;
+
 import com.codeborne.selenide.Selenide;
-import com.codeborne.selenide.SelenideElement;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import ru.netology.web.data.DataHelper;
 import ru.netology.web.page.DashboardPage;
 import ru.netology.web.page.LoginPage;
-import ru.netology.web.page.TransferPage;
 
-
-import java.time.Duration;
-
-import static com.codeborne.selenide.Condition.visible;
-import static com.codeborne.selenide.Selectors.withText;
-import static com.codeborne.selenide.Selenide.*;
-import static ru.netology.web.data.DataHelper.getAuthInfo;
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static ru.netology.web.data.DataHelper.*;
 
 class MoneyTransferTest {
+    DashboardPage dashboardPage;
+    DataHelper.CardInfo cardFirstInfo;
+    DataHelper.CardInfo cardSecondInfo;
+    int firstCardBalance;
+    int secondCardBalance;
+
+    @BeforeEach
+    void setup() {
+        var loginPage = Selenide.open("http://localhost:9999", LoginPage.class); //запускам страницу и используем пейдж с сохраненными полями страницы
+        var info = getAuthInfo(); //добавляем в переменную info - логин и пароль пользователя (пользователь Вася)
+        var verificationPage = loginPage.validLogin(info);
+        var verificationCode = DataHelper.getVerificationCodeFor(); // в переменную verificationCode - добавляем проверочный код
+        dashboardPage = verificationPage.validVerification(verificationCode);
+        cardFirstInfo = DataHelper.getFerstCardInfo(); //номер первой карты
+        cardSecondInfo = DataHelper.getSecondCardInfo(); //номер второй карты
+        firstCardBalance = dashboardPage.getCardBalance(cardFirstInfo);
+        secondCardBalance = dashboardPage.getCardBalance(cardSecondInfo);
+
+    }
     @Test
     void shouldTransferMoneyBetweenOwnCardsV1() { // проверка перевода с первой карты на вторую
-        var info = getAuthInfo(); //добавляем в переменную info - логин и пароль пользователя (пользователь Вася)
-        var verificationCode = DataHelper.getVerificationCodeFor(info); // в переменную verificationCode - добавляем проверочный код
-        var cardFirstInfo = DataHelper.getFerstCardInfo(); //номер первой карты
-        var cardSecondInfo = DataHelper.getSecondCardInfo(); //номер второй карты
-        var amount100 = DataHelper.genTransferNumber();
-
-        var loginPage = Selenide.open("http://localhost:9999", LoginPage.class); //запускам страницу и используем пейдж с сохраненными полями страницы
-        var verificationPage = loginPage.validLogin(info); // положили в loginPage валидные логин и пароль пользователя, нажали клик и перешли на страницу вертификации (verificationPage)
-        var dashboardPage = verificationPage.validVerification(verificationCode); //на странице вертификации заполнили код и переходим на страницу личный кабинет (dashboardPage)
-        var transferCard = dashboardPage.selectCard(cardFirstInfo); //в странице с картами
-        transferCard.enterTransferAmount(amount100, cardSecondInfo); //на странице перевода
-        dashboardPage.updateCardBalance(cardFirstInfo,amount100);
-        }
-
+        var amount = generateValidAmount(firstCardBalance);
+        var balanceFirstCard = firstCardBalance - amount;
+        var balanceSecondCard = secondCardBalance + amount;
+        var transferPage = dashboardPage.selectCard(cardSecondInfo);
+        dashboardPage = transferPage.makeValidTransfer(String.valueOf(amount), cardFirstInfo);
+        dashboardPage.reloadDashboard();
+        assertAll(() -> dashboardPage.checkCardBalance(cardFirstInfo, balanceFirstCard),
+                () -> dashboardPage.checkCardBalance(cardSecondInfo, balanceSecondCard));
+    }
     @Test
-    void shouldTransferMoneyBetweenOwnCards() {
-        var info = getAuthInfo(); //добавляем в переменную info - логин и пароль пользователя (пользователь Вася)
-        var verificationCode = DataHelper.getVerificationCodeFor(info); // в переменную verificationCode - добавляем проверочный код
-        var cardFirstInfo = DataHelper.getFerstCardInfo(); //номер первой карты
-        var cardSecondInfo = DataHelper.getSecondCardInfo(); //номер второй карты
-        var amount100 = DataHelper.genTransferNumber();
-
-        var loginPage = Selenide.open("http://localhost:9999", LoginPage.class); //запускам страницу и используем пейдж с сохраненными полями страницы
-        var verificationPage = loginPage.validLogin(info); // положили в loginPage валидные логин и пароль пользователя, нажали клик и перешли на страницу вертификации (verificationPage)
-        var dashboardPage = verificationPage.validVerification(verificationCode); //на странице вертификации заполнили код и переходим на страницу личный кабинет (dashboardPage)
-        var transferCard = dashboardPage.selectCard(cardFirstInfo);
-        $("[data-test-id='dashboard']")
-                .shouldHave(Condition.text("Личный кабинет"), Duration.ofSeconds(15)).shouldBe(visible);
-        $("[class=App_appContainer__3jRx1]");
-        $("[data-test-id=amount] .input__control").shouldBe(visible).setValue("100");
-        $("[data-test-id=from] .input__control").shouldBe(visible).setValue("5559 0000 0000 0002");
-        $(".button").click();
-        $("[data-test-id=92df3f1c-a033-48e6-8390-206f6b1f56c0] .list__item").shouldHave(Condition.text("10100")).shouldBe(visible);
+    void shouldTransferMoneyBetweenOwnCardsV2() { // проверка перевода со второй карты на первую
+        var amount = generateValidAmount(secondCardBalance);
+        var balanceFirstCard = firstCardBalance + amount;
+        var balanceSecondCard = secondCardBalance - amount;
+        var transferPage = dashboardPage.selectCard(cardFirstInfo);
+        dashboardPage = transferPage.makeValidTransfer(String.valueOf(amount), cardSecondInfo);
+        dashboardPage.reloadDashboard();
+        assertAll(() -> dashboardPage.checkCardBalance(cardFirstInfo, balanceFirstCard),
+                () -> dashboardPage.checkCardBalance(cardSecondInfo, balanceSecondCard));
+    }
+    @Test
+    void shouldTransferMoneyBetweenOwnCardsInvalid () {
+        var amount = generateInvalidAmount(secondCardBalance);
+        var transferPage = dashboardPage.selectCard(cardFirstInfo);
+        transferPage.makeValidTransfer(String.valueOf(amount), cardFirstInfo);
+        assertAll(() -> transferPage.findErrorMassage("Выполнена попытка перевода суммы, превышающей остаток на карте списания"));
     }
 }

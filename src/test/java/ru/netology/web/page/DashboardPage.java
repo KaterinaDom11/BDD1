@@ -6,17 +6,18 @@ import com.codeborne.selenide.SelenideElement;
 import lombok.val;
 import ru.netology.web.data.DataHelper;
 
+import static com.codeborne.selenide.Condition.text;
 import static com.codeborne.selenide.Condition.visible;
 import static com.codeborne.selenide.Selenide.$;
 import static com.codeborne.selenide.Selenide.$$;
 
 public class DashboardPage {
-    private SelenideElement heading = $("[data-test-id=dashboard]");
-
-    private ElementsCollection cards = $$(".list__item div");
+    private final SelenideElement heading = $("[data-test-id=dashboard]");
+    private final ElementsCollection cards = $$(".list__item div");
+    private final SelenideElement reloadButton = $("[data-test-id='action-reload']");
     private final String balanceStart = "баланс: ";
     private final String balanceFinish = " р.";
-    ;
+
 
     public DashboardPage() {
         heading.shouldBe(visible);
@@ -36,25 +37,20 @@ public class DashboardPage {
         return new TransferPage();
     }
 
+    public void reloadDashboard() { //обновление страницы
+        reloadButton.click();
+        heading.shouldBe(visible);
+    }
+
     private int extractBalance(String text) {
         var start = text.indexOf(balanceStart);
         var finish = text.indexOf(balanceFinish);
         var value = text.substring(start + balanceStart.length(), finish);
         return Integer.parseInt(value);
     }
-
-    public int updateCardBalance(DataHelper.CardInfo cardInfo, DataHelper.TransferNumber transferAmount) {
-        int currentBalance = getCardBalance(cardInfo); // Получаем текущий баланс
-        int newBalance = currentBalance + transferAmount.getAmount(); // Обновляем баланс
-        enterTransferAmount(cardInfo, transferAmount.getAmount());
-
-        // Проверяем, что текст на карточке соответствует новому балансу
-        getCardInfo(cardInfo).shouldHave(Condition.text(String.valueOf(newBalance))); // Приводим newBalance к строке
-
-        // Обновляем интерфейс
-        refreshUI(); // Обновляем интерфейс после выполнения перевода
-
-        return newBalance;; // Возвращаем новый баланс
+    //для проверки баланса карт
+    public void checkCardBalance(DataHelper.CardInfo cardInfo, int expectedBalance) { //cardInfo - ищем карту,
+        getCardInfo(cardInfo).should(visible).should(text(balanceStart + expectedBalance + balanceFinish)); //getCardInfo(cardInfo) - нашли строчку карты, should(visible) - проверили ее видимость, should(text(balanceStart + expectedBalance + balanceFinish)- проверяем текст
     }
 
 }
